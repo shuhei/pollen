@@ -1,0 +1,11 @@
+{
+  "name": "@shuhei/pollen",
+  "version": "0.0.1",
+  "main": "index.js",
+  "repository": "git@github.com:shuhei/pollen.git",
+  "author": "Shuhei Kagawa <shuhei.kagawa@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "agentkeepalive": "^4.0.0"
+  }
+}
