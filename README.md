@@ -46,3 +46,8 @@ const req = https.request({
   agent,
 });
 ```
+
+## Limitations
+
+- Only IPv4 is supported.
+- `/etc/hosts`, etc are not supported because this package internally uses `dns.resolve4()`. See [Node.js documentation](https://nodejs.org/api/dns.html#dns_implementation_considerations) for more details.
