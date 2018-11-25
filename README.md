@@ -1,6 +1,6 @@
 # pollen
 
-DNS polling for HTTP Keep-Alive
+DNS polling for HTTP Keep-Alive of Node.js HTTP clients
 
 ## Why?
 

@@ -2,6 +2,7 @@
   "name": "@shuhei/pollen",
   "version": "0.0.1",
   "main": "index.js",
+  "description": "DNS polling for HTTP Keep-Alive of Node.js HTTP clients",
   "repository": "git@github.com:shuhei/pollen.git",
   "author": "Shuhei Kagawa <shuhei.kagawa@gmail.com>",
   "license": "MIT",
