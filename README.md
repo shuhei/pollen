@@ -10,6 +10,8 @@ DNS polling for HTTP Keep-Alive of Node.js HTTP clients
 
 To achieve good performance, we want to keep Keep-Alive connections as much as possible. On the over hand, DNS-based traffic switch doesn't allow us to keep connections forever because existing persistent connections can become stale when DNS records change.
 
+## Solution
+
 This package polls DNS records and keep Keep-Alive connections using [agentkeepalive](https://github.com/node-modules/agentkeepalive) as long as DNS records stay same. When DNS records change, it creates new connections with already retrieved IP addresses without making new DNS queries.
 
 Even when DNS records change, existing connections are not immediately terminated. We can keep them for the next DNS record change (for example, DNS records can go back and forth with weighted DNS routing) with `freeSocketTimeout` option of `agentkeepalive`.
