@@ -14,6 +14,14 @@ This package polls DNS records and keep Keep-Alive connections using [agentkeepa
 
 Even when DNS records change, existing connections are not immediately terminated. We can keep them for the next DNS record change (for example, DNS records can go back and forth with weighted DNS routing) with `freeSocketTimeout` option of `agentkeepalive`.
 
+## Install
+
+```sh
+npm install -S @shuhei/pollen
+# or
+yarn add @shuhei/pollen
+```
+
 ## Example
 
 ```js
