@@ -1,7 +1,7 @@
 const https = require('https');
-const { PollingManager, HttpsAgent } = require('.');
+const { DnsPolling, HttpsAgent } = require('.');
 
-const pollingManager = new PollingManager();
+const pollingManager = new DnsPolling();
 const agent = new HttpsAgent();
 
 function makeRequest(hostname) {

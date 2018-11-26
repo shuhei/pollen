@@ -28,9 +28,9 @@ yarn add @shuhei/pollen
 
 ```js
 const https = require('https');
-const { PollingManager, HttpsAgent } = require('@shuhei/pollen');
+const { DnsPolling, HttpsAgent } = require('@shuhei/pollen');
 
-const dnsPolling = new PollingManager({
+const dnsPolling = new DnsPolling({
   interval: 30 * 1000 // 30 seconds by default
 });
 // Just a thin wrapper of https://github.com/node-modules/agentkeepalive

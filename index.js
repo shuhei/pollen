@@ -100,7 +100,7 @@ function extendAgent(OriginalAgent) {
   return DnsAgent;
 }
 
-class PollingManager {
+class DnsPolling {
   constructor(options) {
     this.pollers = new Map();
     this.options = options;
@@ -127,7 +127,7 @@ const HttpsAgent = extendAgent(OriginalHttpsAgent);
 
 module.exports = {
   Poller,
-  PollingManager,
+  DnsPolling,
   HttpAgent,
   HttpsAgent,
 };
