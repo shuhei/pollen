@@ -90,3 +90,57 @@ describe('initial lookup', () => {
     poller.start();
   });
 });
+
+describe('after a successful first poll', () => {
+  const addresses = ['1.1.1.1', '3.3.3.3', '2.2.2.2'];
+  let poller;
+  let initialLookup;
+
+  beforeEach((done) => {
+    poller = new Poller('example.com');
+
+    dns.resolve4.mockImplementation((hostname, callback) => {
+      process.nextTick(done);
+      callback(null, addresses);
+    });
+    initialLooku = poller.getLookup();
+
+    poller.start();
+  });
+
+  afterEach(() => {
+    poller.stop();
+  });
+
+  it('sets a new lookup function with a key', () => {
+      const lookup = poller.getLookup();
+      expect(lookup).not.toBe(initialLookup);
+
+      // The key should have sorted IP addresses.
+      expect(lookup.key).toBe('1.1.1.1,2.2.2.2,3.3.3.3');
+
+      const anotherLookup = poller.getLookup();
+      expect(anotherLookup).toBe(lookup);
+  });
+
+  it('sets a new lookup function that keeps the result of dns.resolve4', (done) => {
+    const lookup = poller.getLookup();
+
+    expect(dns.resolve4).toHaveBeenCalledTimes(1);
+
+    let called = 0;
+    for (let i = 0; i < 3; i++) {
+      lookup('example.com', (err, address, family) => {
+        expect(err).toBe(null);
+        expect(addresses).toContain(address);
+        expect(family).toBe(4);
+
+        called += 1;
+        if (called === 3) {
+          expect(dns.resolve4).toHaveBeenCalledTimes(1);
+          done();
+        }
+      });
+    }
+  });
+});
