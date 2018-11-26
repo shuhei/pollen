@@ -63,7 +63,7 @@ class Poller {
 
   validateHostname(hostname) {
     if (hostname !== this.hostname) {
-      cb(new Error(`Invalid lookup: expected ${this.hostname} but got ${hostname}`));
+      throw new Error(`Invalid lookup: expected ${this.hostname} but got ${hostname}`);
     }
   }
 
