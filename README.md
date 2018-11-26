@@ -2,6 +2,9 @@
 
 DNS polling for HTTP Keep-Alive of Node.js HTTP clients
 
+[![CircleCI](https://circleci.com/gh/shuhei/pollen.svg?style=svg)](https://circleci.com/gh/shuhei/pollen)
+[![codecov](https://codecov.io/gh/shuhei/pollen/branch/master/graph/badge.svg)](https://codecov.io/gh/shuhei/pollen)
+
 ## Why?
 
 - Support server-side traffic switch using [weighted DNS routing](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy.html#routing-policy-weighted)
