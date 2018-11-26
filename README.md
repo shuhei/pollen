@@ -3,6 +3,7 @@
 DNS polling for HTTP Keep-Alive of Node.js HTTP clients
 
 [![CircleCI](https://circleci.com/gh/shuhei/pollen.svg?style=svg)](https://circleci.com/gh/shuhei/pollen)
+[![codecov](https://codecov.io/gh/shuhei/pollen/branch/master/graph/badge.svg)](https://codecov.io/gh/shuhei/pollen)
 
 ## Why?
 
