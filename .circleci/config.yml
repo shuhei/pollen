@@ -31,7 +31,7 @@ jobs:
           key: v1-dependencies-{{ checksum "yarn.lock" }}
 
       # run tests!
-      - run: yarn test
+      - run: yarn coverage
 
   build-node-8:
     <<: *common-build

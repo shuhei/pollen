@@ -8,7 +8,8 @@
   "license": "MIT",
   "scripts": {
     "test": "jest",
-    "tdd": "jest --watch"
+    "tdd": "jest --watch",
+    "coverage": "jest --coverage"
   },
   "publishConfig": {
     "access": "public"
