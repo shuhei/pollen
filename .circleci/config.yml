@@ -4,7 +4,9 @@
 #
 version: 2
 jobs:
+  # This job is used as a template for each Node.js version.
   build-node-common: &common-build
+    # This property is overridden by each job but is set because it's mandatory.
     docker:
       - image: circleci/node
 
