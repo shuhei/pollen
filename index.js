@@ -24,7 +24,10 @@ class Poller {
     };
   }
 
-  poll() {
+  poll(tries) {
+    if (tries <= 0) {
+      return;
+    }
     dns.resolve4(this.hostname, (err, addresses) => {
       if (this.pendingCallbacks) {
         for (const pendingCallback of this.pendingCallbacks) {
@@ -41,6 +44,7 @@ class Poller {
 
       if (err) {
         // TODO: Log error.
+        this.poll(tries - 1);
         return;
       }
 
@@ -78,8 +82,8 @@ class Poller {
     if (this.timer) {
       return this;
     }
-    this.poll();
-    this.timer = setInterval(this.poll, this.interval);
+    this.poll(3);
+    this.timer = setInterval(this.poll, this.interval, 3);
     this.timer.unref();
     return this;
   }

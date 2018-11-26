@@ -103,7 +103,7 @@ describe('after a successful first poll', () => {
       process.nextTick(done);
       callback(null, addresses);
     });
-    initialLooku = poller.getLookup();
+    initialLookup = poller.getLookup();
 
     poller.start();
   });
@@ -142,5 +142,36 @@ describe('after a successful first poll', () => {
         }
       });
     }
+  });
+});
+
+describe('when DNS resolver keeps failing', () => {
+  let poller;
+  let initialLookup;
+
+  afterEach(() => {
+    poller.stop();
+  });
+
+  it('tries 3 times and gives up', (done) => {
+    poller = new Poller('example.com');
+    initialLookup = poller.getLookup();
+
+    const tries = 3;
+    const errorFromResolve4 = new Error('some error');
+    let called = 0;
+    dns.resolve4.mockImplementation((hostname, callback) => {
+      callback(errorFromResolve4);
+      called += 1;
+      if (called === tries) {
+        process.nextTick(() => {
+          expect(dns.resolve4).toHaveBeenCalledTimes(tries);
+          expect(poller.getLookup()).toBe(initialLookup);
+          done();
+        });
+      }
+    });
+
+    poller.start();
   });
 });
