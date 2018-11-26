@@ -1,6 +1,6 @@
 {
   "name": "@shuhei/pollen",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "index.js",
   "description": "DNS polling for HTTP Keep-Alive of Node.js HTTP clients",
   "repository": "git@github.com:shuhei/pollen.git",
