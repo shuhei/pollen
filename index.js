@@ -18,7 +18,7 @@ class Poller {
 
     this.pendingCallbacks = [];
     this.lookup = (hostname, options, callback) => {
-      this.validateHostname(hostname);
+      this.validateLookupArguments(hostname, options, callback);
       const cb = callback || options;
       this.pendingCallbacks.push(cb);
     };
@@ -53,7 +53,7 @@ class Poller {
       }
 
       this.lookup = (hostname, options, callback) => {
-        this.validateHostname(hostname);
+        this.validateLookupArguments(hostname, options, callback);
         const cb = callback || options;
         cb(null, randomlyPickOne(sortedAddresses), 4);
       }
@@ -61,7 +61,14 @@ class Poller {
     });
   }
 
-  validateHostname(hostname) {
+  validateLookupArguments(hostname, options, callback) {
+    const cb = callback || options;
+    if (typeof cb !== 'function') {
+      throw new TypeError('Invalid arguments: callback must be passed');
+    }
+    if (typeof hostname !== 'string') {
+      throw new TypeError('Invalid arguments: hostname must be passed');
+    }
     if (hostname !== this.hostname) {
       throw new Error(`Invalid lookup: expected ${this.hostname} but got ${hostname}`);
     }
