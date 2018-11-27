@@ -32,7 +32,7 @@ class DnsPolling extends EventEmitter {
   }
 
   forwardEvents(poller) {
-    for (event of ['resolve:success', 'resolve:error']) {
+    for (const event of ['resolve:success', 'resolve:error']) {
       const forward = (payload) => this.emit(event, payload);
       poller.on(event, forward);
     }
