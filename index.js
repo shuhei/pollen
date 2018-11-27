@@ -13,6 +13,7 @@ class Poller {
 
     this.hostname = hostname;
     this.interval = options.interval || 30 * 1000;
+    this.retries = options.retries || 3;
 
     this.poll = this.poll.bind(this);
 
@@ -82,8 +83,8 @@ class Poller {
     if (this.timer) {
       return this;
     }
-    this.poll(3);
-    this.timer = setInterval(this.poll, this.interval, 3);
+    this.poll(this.retries);
+    this.timer = setInterval(this.poll, this.interval, this.retries);
     this.timer.unref();
     return this;
   }
