@@ -43,11 +43,20 @@ describe('initial lookup', () => {
       expect(hostname).toBe('example.com');
       callback(null, addresses);
     });
+    const onResolveSuccess = jest.fn();
+    poller.on('resolve:success', onResolveSuccess);
 
     initialLookup('example.com', (err, address, family) => {
       expect(err).toBe(null);
       expect(addresses).toContain(address);
       expect(family).toBe(4);
+
+      expect(onResolveSuccess).toHaveBeenCalledTimes(1);
+      const payload = onResolveSuccess.mock.calls[0][0];
+      expect(payload.hostname).toBe('example.com');
+      expect(payload.update).toBe(true);
+      expect(typeof payload.duration).toBe('number');
+
       done();
     });
     poller.start();
@@ -58,11 +67,21 @@ describe('initial lookup', () => {
     dns.resolve4.mockImplementation((hostname, callback) => {
       callback(errorFromResolve4);
     });
+    const onResolveError = jest.fn();
+    poller.on('resolve:error', onResolveError);
 
     initialLookup('example.com', (err, address, family) => {
       expect(err).toBe(errorFromResolve4);
       expect(address).toBe(undefined);
       expect(family).toBe(undefined);
+
+      expect(onResolveError).toHaveBeenCalledTimes(3);
+      for (const [payload] of onResolveError.mock.calls) {
+        expect(payload.hostname).toBe('example.com');
+        expect(payload.error).toBe(errorFromResolve4);
+        expect(typeof payload.duration).toBe('number');
+      }
+
       done();
     });
     poller.start();
@@ -73,6 +92,8 @@ describe('initial lookup', () => {
     dns.resolve4.mockImplementation((hostname, callback) => {
       callback(null, addresses);
     });
+    const onResolveSuccess = jest.fn();
+    poller.on('resolve:success', onResolveSuccess);
 
     let called = 0;
     for (let i = 0; i < 3; i++) {
@@ -83,6 +104,7 @@ describe('initial lookup', () => {
         called += 1;
         if (called === 3) {
           expect(dns.resolve4).toHaveBeenCalledTimes(1);
+          expect(onResolveSuccess).toHaveBeenCalledTimes(1);
           done();
         }
       });
