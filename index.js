@@ -32,7 +32,11 @@ class DnsPolling extends EventEmitter {
   }
 
   forwardEvents(poller) {
-    for (const event of ['resolve:success', 'resolve:error']) {
+    const events = [
+      'resolve:success',
+      'resolve:error'
+    ];
+    for (const event of events) {
       const forward = (payload) => this.emit(event, payload);
       poller.on(event, forward);
     }
@@ -52,5 +56,5 @@ module.exports = {
   Poller,
   DnsPolling,
   HttpAgent,
-  HttpsAgent,
+  HttpsAgent
 };

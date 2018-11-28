@@ -8,10 +8,13 @@ jest.mock('../poller', () => {
   return MockPoller;
 });
 
-const { DnsPolling, Poller } = require('..');
+const {
+  DnsPolling,
+  Poller,
+} = require('..');
 
 describe('DnsPolling', () => {
-  it('calls start, getLookup and stop of poller', () => {
+  it('calls start, getLookup and stop of pollers', () => {
     const polling = new DnsPolling();
 
     const lookupFoo = polling.getLookup('foo.com');
@@ -23,24 +26,41 @@ describe('DnsPolling', () => {
     expect(Poller.prototype.stop).toHaveBeenCalledTimes(2);
   });
 
-  it('forwards events from pollers', (done) => {
+  it('forwards resolve success and error events from pollers', (done) => {
     const polling = new DnsPolling();
     const successPayload = { dummy: 'success' };
     const errorPayload = { dummy: 'error' };
-    let successCalled = false;
-    polling.once('resolve:success', (payload) => {
-      expect(payload).toBe(successPayload);
-      successCalled = true;
-    });
-    polling.once('resolve:error', (payload) => {
-      expect(payload).toBe(errorPayload);
-      expect(successCalled).toBe(true);
-      done();
-    });
+    const onResolveSuccess = jest.fn();
+    const onResolveError = jest.fn();
+    polling.once('resolve:success', onResolveSuccess);
+    polling.once('resolve:error', onResolveError);
+
     const lookupFoo = polling.getLookup('foo.com');
     const poller = polling.pollers.get('foo.com');
-
     poller.emit('resolve:success', successPayload);
     poller.emit('resolve:error', errorPayload);
+
+    process.nextTick(() => {
+      expect(onResolveSuccess).toHaveBeenCalledTimes(1);
+      expect(onResolveSuccess).toHaveBeenCalledWith(successPayload);
+      expect(onResolveError).toHaveBeenCalledTimes(1);
+      expect(onResolveError).toHaveBeenCalledWith(errorPayload);
+      done();
+    });
+  });
+
+  it('does not forward unknown events', (done) => {
+    const polling = new DnsPolling();
+    const lookupFoo = polling.getLookup('foo.com');
+    const onFoo = jest.fn();
+    polling.on('foo', onFoo);
+
+    const poller = polling.pollers.get('foo.com');
+    poller.emit('foo');
+
+    process.nextTick(() => {
+      expect(onFoo).not.toHaveBeenCalled();
+      done();
+    });
   });
 });
