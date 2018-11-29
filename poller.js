@@ -1,5 +1,5 @@
-const dns = require('dns');
-const EventEmitter = require('events');
+const dns = require("dns");
+const EventEmitter = require("events");
 
 function randomlyPickOne(items) {
   const index = Math.floor(Math.random() * items.length);
@@ -50,7 +50,7 @@ class Poller extends EventEmitter {
       }
 
       if (err) {
-        this.emit('resolve:error', {
+        this.emit("resolve:error", {
           hostname: this.hostname,
           duration,
           error: err
@@ -60,10 +60,10 @@ class Poller extends EventEmitter {
       }
 
       const sortedAddresses = addresses.slice().sort();
-      const key = sortedAddresses.join(',');
+      const key = sortedAddresses.join(",");
       const sameIPs = !!this.lookup && this.lookup.key === key;
 
-      this.emit('resolve:success', {
+      this.emit("resolve:success", {
         hostname: this.hostname,
         duration,
         update: !sameIPs
@@ -78,21 +78,23 @@ class Poller extends EventEmitter {
         this.validateLookupArguments(hostname, options, callback);
         const cb = callback || options;
         cb(null, randomlyPickOne(sortedAddresses), 4);
-      }
+      };
       this.lookup.key = key;
     });
   }
 
   validateLookupArguments(hostname, options, callback) {
     const cb = callback || options;
-    if (typeof cb !== 'function') {
-      throw new TypeError('Invalid arguments: callback must be passed');
+    if (typeof cb !== "function") {
+      throw new TypeError("Invalid arguments: callback must be passed");
     }
-    if (typeof hostname !== 'string') {
-      throw new TypeError('Invalid arguments: hostname must be passed');
+    if (typeof hostname !== "string") {
+      throw new TypeError("Invalid arguments: hostname must be passed");
     }
     if (hostname !== this.hostname) {
-      throw new Error(`Invalid lookup: expected ${this.hostname} but got ${hostname}`);
+      throw new Error(
+        `Invalid lookup: expected ${this.hostname} but got ${hostname}`
+      );
     }
   }
 
