@@ -1,7 +1,7 @@
-const EventEmitter = require('events');
-const OriginalHttpAgent = require('agentkeepalive');
+const EventEmitter = require("events");
+const OriginalHttpAgent = require("agentkeepalive");
 const OriginalHttpsAgent = OriginalHttpAgent.HttpsAgent;
-const Poller = require('./poller');
+const Poller = require("./poller");
 
 function extendAgent(OriginalAgent) {
   class DnsAgent extends OriginalAgent {
@@ -32,12 +32,9 @@ class DnsPolling extends EventEmitter {
   }
 
   forwardEvents(poller) {
-    const events = [
-      'resolve:success',
-      'resolve:error'
-    ];
+    const events = ["resolve:success", "resolve:error"];
     for (const event of events) {
-      const forward = (payload) => this.emit(event, payload);
+      const forward = payload => this.emit(event, payload);
       poller.on(event, forward);
     }
   }

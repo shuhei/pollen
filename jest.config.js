@@ -1,5 +1,5 @@
 module.exports = {
-  testEnvironment: 'node',
+  testEnvironment: "node",
   // Disable the default babel transform.
   transform: {},
   clearMocks: true,
