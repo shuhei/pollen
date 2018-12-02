@@ -1,6 +1,7 @@
 jest.mock("dns", () => ({
   resolve4: jest.fn()
 }));
+jest.useFakeTimers();
 
 const dns = require("dns");
 
@@ -165,6 +166,33 @@ describe("after a successful first poll", () => {
       });
     }
   });
+
+  it("calls dns.resolve4 again after an interval and keeps the lookup function if addresses stay", () => {
+    const lookup = poller.getLookup();
+    expect(dns.resolve4).toHaveBeenCalledTimes(1);
+
+    jest.advanceTimersByTime(30 * 1000);
+    expect(dns.resolve4).toHaveBeenCalledTimes(2);
+
+    const anotherLookup = poller.getLookup();
+    expect(anotherLookup).toBe(lookup);
+  });
+
+  it("calls dns.resolve4 again after an interval and creates a new lookup function if addresses change", () => {
+    const lookup = poller.getLookup();
+    expect(dns.resolve4).toHaveBeenCalledTimes(1);
+
+    const otherAddresses = ["4.4.4.4", "3.3.3.3"];
+    dns.resolve4.mockImplementation((hostname, callback) => {
+      callback(null, otherAddresses);
+    });
+    jest.advanceTimersByTime(30 * 1000);
+    expect(dns.resolve4).toHaveBeenCalledTimes(2);
+
+    const anotherLookup = poller.getLookup();
+    expect(anotherLookup).not.toBe(lookup);
+    expect(anotherLookup.key).toBe("3.3.3.3,4.4.4.4");
+  });
 });
 
 describe("when DNS resolver keeps failing", () => {
@@ -195,5 +223,21 @@ describe("when DNS resolver keeps failing", () => {
     });
 
     poller.start();
+  });
+});
+
+describe("start()", () => {
+  let poller;
+
+  afterEach(() => {
+    poller.stop();
+  });
+
+  it("calls setInterval only once", () => {
+    poller = new Poller("example.com").start();
+    expect(setInterval).toHaveBeenCalledTimes(1);
+
+    poller.start();
+    expect(setInterval).toHaveBeenCalledTimes(1);
   });
 });
