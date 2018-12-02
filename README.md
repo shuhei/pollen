@@ -58,9 +58,8 @@ const req = https.request({
 
 ## Development
 
-To run the integration tests with multiple IP addresses on local:
+To run the integration tests with multiple local IP addresses on Mac:
 
 ```sh
-# On Mac
 sudo ifconfig lo0 alias 127.0.0.2
 ```
