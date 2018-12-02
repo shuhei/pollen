@@ -4,13 +4,15 @@ const dgram = require("dgram");
 const DnsPacket = require("native-dns-packet");
 const { HttpAgent, DnsPolling } = require("..");
 
+const HTTP_PORT = 8989;
+
 function createHttpServer(host) {
   return new Promise((resolve, reject) => {
     const server = http.createServer((req, res) => {
       res.writeHead(200);
       res.end(host);
     });
-    server.listen(null, host, () => {
+    server.listen(HTTP_PORT, host, () => {
       resolve(server);
     });
     server.on("error", err => {
@@ -50,6 +52,28 @@ function createDnsServer() {
   });
 }
 
+async function getHttp(options) {
+  return new Promise((resolve, reject) => {
+    const req = http.get(options);
+    req.on("response", res => {
+      const chunks = [];
+      res.on("data", chunk => {
+        chunks.push(chunk);
+      });
+      res.on("end", () => {
+        const body = Buffer.concat(chunks).toString("utf8");
+        resolve({
+          statusCode: res.statusCode,
+          headers: res.headers,
+          body
+        });
+      });
+    });
+    req.on("error", reject);
+    req.end();
+  });
+}
+
 describe("Integration", () => {
   let httpServer1;
   let httpServer2;
@@ -73,7 +97,7 @@ describe("Integration", () => {
     dnsServer.socket.close(onClose);
   });
 
-  it("allows a single HTTP request", done => {
+  it("allows a single HTTP request", async () => {
     dnsServer.getResponse.mockImplementation(req => {
       const res = {
         ...req,
@@ -92,25 +116,13 @@ describe("Integration", () => {
     const agent = new HttpAgent();
 
     const hostname = "pollen.com";
-    const req = http.get({
+    const res = await getHttp({
       hostname,
-      port: httpServer1.address().port,
+      port: HTTP_PORT,
       agent,
       lookup: polling.getLookup(hostname)
     });
-    req.on("response", res => {
-      expect(res.statusCode).toBe(200);
-      const chunks = [];
-      res.on("data", chunk => {
-        chunks.push(chunk);
-      });
-      res.on("end", () => {
-        const body = Buffer.concat(chunks).toString("utf8");
-        expect(body).toBe("127.0.0.1");
-        done();
-      });
-    });
-    req.on("error", done.fail);
-    req.end();
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toBe("127.0.0.1");
   });
 });
