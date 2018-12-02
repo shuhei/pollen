@@ -74,6 +74,29 @@ async function getHttp(options) {
   });
 }
 
+function replyWithAddress(address) {
+  return req => {
+    const res = {
+      ...req,
+      qr: 1,
+      answer: req.question.map(q => ({
+        name: q.name,
+        type: q.type,
+        class: q.class,
+        ttl: 1000,
+        address
+      }))
+    };
+    return res;
+  };
+}
+
+function wait(ms) {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms);
+  });
+}
+
 describe("Integration", () => {
   let httpServer1;
   let httpServer2;
@@ -98,20 +121,7 @@ describe("Integration", () => {
   });
 
   it("allows a single HTTP request", async () => {
-    dnsServer.getResponse.mockImplementation(req => {
-      const res = {
-        ...req,
-        qr: 1,
-        answer: req.question.map(q => ({
-          name: q.name,
-          type: q.type,
-          class: q.class,
-          ttl: 1000,
-          address: "127.0.0.1"
-        }))
-      };
-      return res;
-    });
+    dnsServer.getResponse.mockImplementation(replyWithAddress("127.0.0.1"));
     const polling = new DnsPolling();
     const agent = new HttpAgent();
 
@@ -124,5 +134,44 @@ describe("Integration", () => {
     });
     expect(res.statusCode).toBe(200);
     expect(res.body).toBe("127.0.0.1");
+  });
+
+  it("switches two servers when DNS answer changes", async () => {
+    dnsServer.getResponse.mockImplementationOnce(replyWithAddress("127.0.0.1"));
+    dnsServer.getResponse.mockImplementationOnce(replyWithAddress("127.0.0.2"));
+    const polling = new DnsPolling({
+      interval: 100
+    });
+    const agent = new HttpAgent();
+
+    const hostname = "pollen.com";
+    const res1 = await getHttp({
+      hostname,
+      port: HTTP_PORT,
+      agent,
+      lookup: polling.getLookup(hostname)
+    });
+    expect(res1.statusCode).toBe(200);
+    expect(res1.body).toBe("127.0.0.1");
+
+    await wait(150);
+
+    const res2 = await getHttp({
+      hostname,
+      port: HTTP_PORT,
+      agent,
+      lookup: polling.getLookup(hostname)
+    });
+    expect(res2.statusCode).toBe(200);
+    expect(res2.body).toBe("127.0.0.2");
+
+    expect(Object.keys(agent.freeSockets)).toEqual([
+      "pollen.com:8989:",
+      "127.0.0.2:pollen.com:8989:"
+    ]);
+    expect(agent.freeSockets[`pollen.com:${HTTP_PORT}:`]).toHaveLength(1);
+    expect(
+      agent.freeSockets[`127.0.0.2:pollen.com:${HTTP_PORT}:`]
+    ).toHaveLength(1);
   });
 });
