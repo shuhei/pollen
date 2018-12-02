@@ -55,3 +55,12 @@ const req = https.request({
 
 - Only IPv4 is supported.
 - `/etc/hosts`, etc are not supported because this package internally uses `dns.resolve4()`. See [Node.js documentation](https://nodejs.org/api/dns.html#dns_implementation_considerations) for more details.
+
+## Development
+
+To run the integration tests with multiple IP addresses on local:
+
+```sh
+# On Mac
+sudo ifconfig lo0 alias 127.0.0.2
+```
