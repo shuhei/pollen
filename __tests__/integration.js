@@ -1,5 +1,6 @@
 const http = require("http");
 const dns = require("dns");
+const net = require("net");
 const dgram = require("dgram");
 const DnsPacket = require("native-dns-packet");
 const { HttpAgent, DnsPolling } = require("..");
@@ -136,42 +137,63 @@ describe("Integration", () => {
     expect(res.body).toBe("127.0.0.1");
   });
 
-  it("switches two servers when DNS answer changes", async () => {
+  it("switches two servers while keeping connections to both in agent when DNS answer changes", async () => {
     dnsServer.getResponse.mockImplementationOnce(replyWithAddress("127.0.0.1"));
     dnsServer.getResponse.mockImplementationOnce(replyWithAddress("127.0.0.2"));
+    dnsServer.getResponse.mockImplementationOnce(replyWithAddress("127.0.0.1"));
+    dnsServer.getResponse.mockImplementationOnce(replyWithAddress("127.0.0.1"));
+    dnsServer.getResponse.mockImplementationOnce(replyWithAddress("127.0.0.2"));
+
     const polling = new DnsPolling({
       interval: 100
     });
     const agent = new HttpAgent();
+    const createConnection = jest.spyOn(agent, "createConnection");
 
-    const hostname = "pollen.com";
-    const res1 = await getHttp({
-      hostname,
-      port: HTTP_PORT,
-      agent,
-      lookup: polling.getLookup(hostname)
-    });
-    expect(res1.statusCode).toBe(200);
-    expect(res1.body).toBe("127.0.0.1");
+    async function getAndAssert(body) {
+      const hostname = "pollen.com";
+      const res = await getHttp({
+        hostname,
+        port: HTTP_PORT,
+        agent,
+        lookup: polling.getLookup(hostname)
+      });
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toBe(body);
+    }
 
-    await wait(150);
+    // Expecting DNS polling to finish in 50 ms.
+    const bufferForDns = 50;
+    const afterFirstInterval = wait(100 + bufferForDns);
+    const afterSecondInterval = wait(200 + bufferForDns);
+    const afterThirdInterval = wait(300 + bufferForDns);
+    const afterFourthInterval = wait(400 + bufferForDns);
 
-    const res2 = await getHttp({
-      hostname,
-      port: HTTP_PORT,
-      agent,
-      lookup: polling.getLookup(hostname)
-    });
-    expect(res2.statusCode).toBe(200);
-    expect(res2.body).toBe("127.0.0.2");
+    // Expexting 2 batches of HTTP requests to finish in 50 ms.
+    await Promise.all([getAndAssert("127.0.0.1"), getAndAssert("127.0.0.1")]);
+    await Promise.all([getAndAssert("127.0.0.1"), getAndAssert("127.0.0.1")]);
+    await afterFirstInterval;
+    await Promise.all([getAndAssert("127.0.0.2"), getAndAssert("127.0.0.2")]);
+    await Promise.all([getAndAssert("127.0.0.2"), getAndAssert("127.0.0.2")]);
+    await afterSecondInterval;
+    await Promise.all([getAndAssert("127.0.0.1"), getAndAssert("127.0.0.1")]);
+    await Promise.all([getAndAssert("127.0.0.1"), getAndAssert("127.0.0.1")]);
+    await afterThirdInterval;
+    await Promise.all([getAndAssert("127.0.0.1"), getAndAssert("127.0.0.1")]);
+    await Promise.all([getAndAssert("127.0.0.1"), getAndAssert("127.0.0.1")]);
+    await afterFourthInterval;
+    await Promise.all([getAndAssert("127.0.0.2"), getAndAssert("127.0.0.2")]);
+    await Promise.all([getAndAssert("127.0.0.2"), getAndAssert("127.0.0.2")]);
 
-    expect(Object.keys(agent.freeSockets)).toEqual([
+    expect(dnsServer.getResponse).toHaveBeenCalledTimes(5);
+    // Make sure that persistent connections are used.
+    expect(createConnection.mock.calls.map(args => args[0]._agentKey)).toEqual([
       "pollen.com:8989:",
+      "pollen.com:8989:",
+      "127.0.0.1:pollen.com:8989:",
+      "127.0.0.1:pollen.com:8989:",
+      "127.0.0.2:pollen.com:8989:",
       "127.0.0.2:pollen.com:8989:"
     ]);
-    expect(agent.freeSockets[`pollen.com:${HTTP_PORT}:`]).toHaveLength(1);
-    expect(
-      agent.freeSockets[`127.0.0.2:pollen.com:${HTTP_PORT}:`]
-    ).toHaveLength(1);
   });
 });
