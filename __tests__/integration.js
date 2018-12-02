@@ -169,7 +169,7 @@ describe("Integration", () => {
     const afterThirdInterval = wait(300 + bufferForDns);
     const afterFourthInterval = wait(400 + bufferForDns);
 
-    // Expexting 2 batches of HTTP requests to finish in 50 ms.
+    // Expecting 2 batches of HTTP requests to finish in 50 ms.
     await Promise.all([getAndAssert("127.0.0.1"), getAndAssert("127.0.0.1")]);
     await Promise.all([getAndAssert("127.0.0.1"), getAndAssert("127.0.0.1")]);
     await afterFirstInterval;
