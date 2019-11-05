@@ -5,15 +5,13 @@ const dgram = require("dgram");
 const DnsPacket = require("native-dns-packet");
 const { HttpAgent, DnsPolling } = require("..");
 
-const HTTP_PORT = 8989;
-
-function createHttpServer(host) {
+function createHttpServer(port, host) {
   return new Promise((resolve, reject) => {
     const server = http.createServer((req, res) => {
       res.writeHead(200);
       res.end(host);
     });
-    server.listen(HTTP_PORT, host, () => {
+    server.listen(port, host, () => {
       resolve(server);
     });
     server.on("error", err => {
@@ -102,12 +100,20 @@ describe("Integration", () => {
   let httpServer1;
   let httpServer2;
   let dnsServer;
+  let httpPort;
+
   beforeEach(async () => {
-    httpServer1 = await createHttpServer("127.0.0.1");
-    httpServer2 = await createHttpServer("127.0.0.2");
+    // Start an HTTP server with an open port.
+    httpServer1 = await createHttpServer(undefined, "127.0.0.1");
+    httpPort = httpServer1.address().port;
+    expect(typeof httpPort).toBe('number');
+
+    // Use the same port as the first HTTP server.
+    httpServer2 = await createHttpServer(httpPort, "127.0.0.2");
     dnsServer = await createDnsServer();
     dns.setServers([`127.0.0.1:${dnsServer.socket.address().port}`]);
   });
+
   afterEach(done => {
     let count = 0;
     function onClose() {
@@ -129,7 +135,7 @@ describe("Integration", () => {
     const hostname = "pollen.com";
     const res = await getHttp({
       hostname,
-      port: HTTP_PORT,
+      port: httpPort,
       agent,
       lookup: polling.getLookup(hostname)
     });
@@ -154,7 +160,7 @@ describe("Integration", () => {
       const hostname = "pollen.com";
       const res = await getHttp({
         hostname,
-        port: HTTP_PORT,
+        port: httpPort,
         agent,
         lookup: polling.getLookup(hostname)
       });
@@ -188,12 +194,12 @@ describe("Integration", () => {
     expect(dnsServer.getResponse).toHaveBeenCalledTimes(5);
     // Make sure that persistent connections are used.
     expect(createConnection.mock.calls.map(args => args[0]._agentKey)).toEqual([
-      "pollen.com:8989:",
-      "pollen.com:8989:",
-      "127.0.0.1:pollen.com:8989:",
-      "127.0.0.1:pollen.com:8989:",
-      "127.0.0.2:pollen.com:8989:",
-      "127.0.0.2:pollen.com:8989:"
+      `pollen.com:${httpPort}:`,
+      `pollen.com:${httpPort}:`,
+      `127.0.0.1:pollen.com:${httpPort}:`,
+      `127.0.0.1:pollen.com:${httpPort}:`,
+      `127.0.0.2:pollen.com:${httpPort}:`,
+      `127.0.0.2:pollen.com:${httpPort}:`
     ]);
   });
 });
